@@ -49,17 +49,34 @@ def get_artist(artist_name):
         logging.warning(f'no artist returned for {artist_name}')
         return {'id': None, 'name': artist_name, 'uri': None}
 
-    if 1 < len(artists):
-        logging.warning(f'more than 1 artist returned for {artist_name}')
+    artist = get_closest_matching_artist(artist_name, artists)
 
-    # todo: for now pick the first, but how to pick the 'best'?
-    artist = artists[0]
     return {
         'id': artist['id'],
         'name': artist['name'],
         'uri': artist['uri'],
         'top_tracks': get_artist_top_tracks(artist['id'])
     }
+
+def get_closest_matching_artist(artist_name, artists):
+    matched_artist = {}
+    if 1 < len(artists):
+        logging.warning(f'more than 1 artist returned for {artist_name}')
+        artist_name_lower = artist_name.lower()
+        for artist in artists:
+            spotify_artist_name = artist['name'].lower()
+            if(artist_name_lower == spotify_artist_name):
+                matched_artist = artist
+                break
+        if not matched_artist:
+            #if we don't find a good match then just pick the first one
+            matched_artist = artists[0]
+
+        logging.debug("match artist name: " + matched_artist['name'])
+    else:
+        matched_artist = artists[0]
+    
+    return matched_artist
 
 
 def get_artist_top_tracks(artist_id):
@@ -143,3 +160,5 @@ if '__main__' == __name__:
                 track['uri'] for track in get_artist_track_selection(artist['top_tracks'], sample_size)
             ]
             add_to_playlist(playlist_id, track_uris)
+
+    logging.info('playlist loaded')
